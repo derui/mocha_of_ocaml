@@ -1,0 +1,12 @@
+(jbuild_version 1)
+
+(alias
+ ((name runtest)
+  (deps (test_mocha_of_ocaml.bc.js))
+  ))
+
+(executable
+ ((name test_mocha_of_ocaml)
+  (libraries (js_of_ocaml mocha_of_ocaml))
+  (js_of_ocaml ((flags ("--pretty"))))
+  (preprocess (pps (js_of_ocaml-ppx)))))
