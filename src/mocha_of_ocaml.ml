@@ -14,7 +14,7 @@ module Binding = struct
   let mocha : mocha Js.t = Js.Unsafe.global
 
   class type assertion = object
-    method ok: bool Js.t Js.meth
+    method ok: bool Js.t -> unit Js.meth
     method equal: 'a -> 'a -> unit Js.meth 
     method notEqual: 'a -> 'a -> unit Js.meth
     method deepStrictEqual: 'a -> 'a -> unit Js.meth
@@ -22,10 +22,7 @@ module Binding = struct
     method fail: string -> unit Js.meth
   end
 
-  let assertion = 
-    let require = Js.Unsafe.pure_js_expr "require" in
-    let module_ = Js.string "assert" in
-    Js.Unsafe.(fun_call require [|inject module_|])
+  let assertion = Js.Unsafe.js_expr "require('assert')"
 end
 
 type assertion =
@@ -50,8 +47,8 @@ let assertion_to_assert = function
   | NotEq (a, b) -> Binding.assertion##notEqual a b
   | StrictEq (a, b) -> Binding.assertion##deepStrictEqual a b
   | NotStrictEq (a, b) -> Binding.assertion##notDeepStrictEqual a b
-  | Ok v -> Binding.assertion##ok @@ Js.bool v
-  | NotOk v -> Binding.assertion##ok @@ (not v |> Js.bool)
+  | Ok v -> Binding.assertion##ok (Js.bool v)
+  | NotOk v -> Binding.assertion##ok (not v |> Js.bool)
   | Fail v -> Binding.assertion##fail v
 
 type test =
@@ -63,21 +60,22 @@ let suite name tests =
   let name = Js.string name in
   let callback = Js.wrap_callback (fun () ->
       List.iter (function
-          | Sync (name, f) ->
+          | Sync (name, f) -> begin
             let name = Js.string name in 
-            let callback = Js.wrap_callback (fun () -> assertion_to_assert (f ())) in
+            let callback = Js.wrap_callback @@ fun () -> assertion_to_assert (f ()) in
             Binding.mocha##it name callback
-          | Async (name, f) ->
+          end
+          | Async (name, f) -> begin
             let name = Js.string name in 
             let callback = Js.wrap_callback (fun cb ->
                 let open Lwt.Infix in
-                let lwt = f () >|= (fun assertion ->
-                    assertion_to_assert assertion
-                  )
+                let lwt = Lwt_js.yield () >>= f
+                  >|= (fun v -> assertion_to_assert v)
                   >>= (fun _ -> Js.Unsafe.fun_call cb [||] |> Lwt.return) in
-                Lwt.ignore_result lwt
-              ) in 
+                Lwt.ignore_result lwt;
+              ) in
             Binding.mocha##it_async name callback
+          end
         )
         tests
     ) in
