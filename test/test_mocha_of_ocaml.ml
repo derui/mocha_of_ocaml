@@ -15,11 +15,8 @@ let _ =
   
   "async test" >::: [
     "set interval" >:- (
-      fun () -> 
-        let callback = Js.wrap_callback (fun () -> assert_ok false |> Lwt.return) in
-
-        Js.Unsafe.meth_call Js.Unsafe.global "setTimeout" [|
-          Js.Unsafe.inject callback; Js.Unsafe.inject 0
-        |]
+      fun () ->
+        let open Lwt.Infix in
+        Lwt_js.sleep 0.0 >>= fun () -> assert_ok true |> Lwt.return
     );
   ]
