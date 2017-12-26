@@ -26,3 +26,5 @@ lib/bs
 
 lib/
 node_modules/
+_build/
+mocha_of_ocaml.install
