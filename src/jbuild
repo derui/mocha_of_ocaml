@@ -4,5 +4,4 @@
  ((name mocha_of_ocaml)
   (public_name mocha_of_ocaml)
   (libraries (js_of_ocaml lwt js_of_ocaml-lwt))
-  (js_of_ocaml ((flags ("--pretty"))))
   (preprocess (pps (js_of_ocaml-ppx)))))

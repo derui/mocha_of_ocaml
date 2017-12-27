@@ -13,10 +13,10 @@ build: [
 ]
 depends: [
   "jbuilder" {build & >= "1.0+beta16"}
-  "ocamlfind"
-  "lwt" {build & >= "3.1.0"}
-  "js_of_ocaml-lwt" {build & >= "3.0.2"}
-  "js_of_ocaml" {build & >= "3.0.2"}
+  "ocamlfind" {build}
+  "lwt" {>= "3.1.0"}
+  "js_of_ocaml-lwt" {>= "3.0.2"}
+  "js_of_ocaml" {>= "3.0.2"}
   "js_of_ocaml-ppx" {build & >= "3.0.2"}
 ]
 available: [ocaml-version >= "4.05.0"]
