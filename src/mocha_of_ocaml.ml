@@ -22,6 +22,10 @@ module Binding = struct
     (* mocha's function that include all tests *)
     method it: Js.js_string Js.t -> (unit -> unit) Js.callback -> unit Js.meth
     method it_async: Js.js_string Js.t -> (unit -> ('a, 'b) Promise.t Js.t) Js.callback -> unit Js.meth
+    method before: (unit -> unit) Js.callback -> unit Js.meth
+    method beforeEach: (unit -> unit) Js.callback -> unit Js.meth
+    method after: (unit -> unit) Js.callback -> unit Js.meth
+    method afterEach: (unit -> unit) Js.callback -> unit Js.meth
   end
 
   let mocha : mocha Js.t = Js.Unsafe.global
@@ -67,12 +71,20 @@ let assertion_to_assert = function
 type test =
   | Sync of (string * (unit -> assertion))
   | Async of (string * (unit -> assertion Lwt.t))
+  | Before_suite of (unit -> unit)
+  | After_suite of (unit -> unit)
+  | Before_each of (unit -> unit)
+  | After_each of (unit -> unit)
 
 
 let suite name tests =
   let name = Js.string name in
   let callback = Js.wrap_callback (fun () ->
       List.iter (function
+          | Before_suite f -> Binding.mocha##before (Js.wrap_callback f)
+          | Before_each f -> Binding.mocha##beforeEach (Js.wrap_callback f)
+          | After_suite f -> Binding.mocha##after (Js.wrap_callback f)
+          | After_each f -> Binding.mocha##afterEach (Js.wrap_callback f)
           | Sync (name, f) -> begin
               let name = Js.string name in
               let callback = Js.wrap_callback @@ fun () -> assertion_to_assert (f ()) in
@@ -102,3 +114,8 @@ let suite name tests =
 let (>:::) = suite
 let (>::) name cb = Sync (name, cb)
 let (>:-) name cb = Async (name, cb)
+
+let before_suite cb = Before_suite cb
+let before_each cb = Before_each cb
+let after_suite cb = After_suite cb
+let after_each cb = After_each cb

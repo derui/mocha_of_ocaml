@@ -19,4 +19,16 @@ let _ =
         let open Lwt.Infix in
         Lwt_js.sleep 0.0 >>= fun () -> assert_ok true |> Lwt.return
     );
+  ];
+
+  (* Running test in JavaScript should be single thread, so this reference will thread safe. *)
+  let value = ref 0 in
+  "hooks test" >::: [
+    before_suite (fun () -> Firebug.console##log "before suite");
+    after_suite (fun () -> Firebug.console##log "after suite");
+
+    before_each (fun () -> value := !value + 100);
+    after_each (fun () -> value := 0);
+    "can run hooks when before and after assertion" >:: (fun () -> assert_ok (!value = 100));
+    "can run hooks on asynchronous assertion" >:- (fun () -> Lwt.return @@ assert_ok (!value = 100))
   ]

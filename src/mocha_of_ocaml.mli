@@ -21,3 +21,11 @@ val (>:::): string -> test list -> unit
 val (>::) : string -> (unit -> assertion) -> test
 val (>:-) : string -> (unit -> assertion Lwt.t) -> test
 
+(* hooks. Functions named *_suite are once only per suite.
+   Fuctions named *_each execute each case.
+*)
+val before_suite: (unit -> unit) -> test
+val after_suite: (unit -> unit) -> test
+
+val after_each: (unit -> unit) -> test
+val before_each: (unit -> unit) -> test
