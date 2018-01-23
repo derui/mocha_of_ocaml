@@ -12,11 +12,10 @@ build: [
   "jbuilder" "build" "-p" name "-j" jobs
 ]
 depends: [
-  "jbuilder" {build & >= "1.0+beta16"}
-  "ocamlfind" {build}
+  "jbuilder" { >= "1.0+beta16"}
   "lwt" {>= "3.1.0"}
   "js_of_ocaml-lwt" {>= "3.0.2"}
   "js_of_ocaml" {>= "3.0.2"}
-  "js_of_ocaml-ppx" {build & >= "3.0.2"}
+  "js_of_ocaml-ppx" { >= "3.0.2"}
 ]
 available: [ocaml-version >= "4.05.0"]
