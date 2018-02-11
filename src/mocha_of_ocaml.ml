@@ -50,6 +50,7 @@ type assertion =
   | Ok: bool -> assertion
   | NotOk: bool -> assertion
   | Fail: string -> assertion
+  | Combine: assertion * assertion -> assertion
 
 let assert_ok v = Ok v
 let assert_not_ok v = NotOk v
@@ -59,7 +60,7 @@ let assert_strict_eq a b = StrictEq (a, b)
 let assert_not_strict_eq a b = NotStrictEq (a, b)
 let assert_fail message = Fail (message)
 
-let assertion_to_assert = function
+let rec assertion_to_assert = function
   | Eq (a, b) -> Binding.assertion##equal a b
   | NotEq (a, b) -> Binding.assertion##notEqual a b
   | StrictEq (a, b) -> Binding.assertion##deepStrictEqual a b
@@ -67,6 +68,14 @@ let assertion_to_assert = function
   | Ok v -> Binding.assertion##ok (Js.bool v)
   | NotOk v -> Binding.assertion##ok (not v |> Js.bool)
   | Fail v -> Binding.assertion##fail v
+  | Combine (a1, a2) -> begin
+      assertion_to_assert a1;
+      assertion_to_assert a2
+    end
+
+module Infix = struct
+  let (<|>) a1 a2 = Combine (a1, a2)
+end
 
 type test =
   | Sync of (string * (unit -> assertion))

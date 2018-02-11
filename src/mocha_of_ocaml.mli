@@ -9,7 +9,10 @@ val assert_neq : 'a -> 'a -> assertion
 val assert_strict_eq : 'a -> 'a -> assertion
 val assert_not_strict_eq : 'a -> 'a -> assertion
 val assert_fail : string -> assertion
-val assertion_to_assert : assertion -> unit
+
+module Infix : sig
+  val (<|>): assertion -> assertion -> assertion
+end
 
 (* type of testcase *)
 type test

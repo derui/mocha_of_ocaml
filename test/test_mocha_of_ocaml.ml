@@ -12,7 +12,7 @@ let _ =
     "strict equal" >:: (fun _ -> assert_strict_eq (Js.string "foo") (Js.string "foo"));
     "not strict equal" >:: (fun _ -> assert_not_strict_eq (Js.string "foo") (Js.string "bar"));
   ];
-  
+
   "async test" >::: [
     "set interval" >:- (
       fun () ->
@@ -31,4 +31,11 @@ let _ =
     after_each (fun () -> value := 0);
     "can run hooks when before and after assertion" >:: (fun () -> assert_ok (!value = 100));
     "can run hooks on asynchronous assertion" >:- (fun () -> Lwt.return @@ assert_ok (!value = 100))
-  ]
+  ];
+
+  "assertion combining" >::: [
+    "should be able to use multiple assertion in one test" >:: (fun _ ->
+        let open Infix in
+        assert_ok (1 = 1) <|> assert_eq 2 2
+      );
+  ];
