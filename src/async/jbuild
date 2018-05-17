@@ -1,0 +1,7 @@
+(jbuild_version 1)
+
+(library
+ ((name mocha_of_ocaml_async)
+  (public_name mocha_of_ocaml.async)
+  (libraries (js_of_ocaml mocha_of_ocaml lwt js_of_ocaml-lwt))
+  (preprocess (pps (js_of_ocaml-ppx)))))

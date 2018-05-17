@@ -60,7 +60,7 @@ let assert_strict_eq a b = StrictEq (a, b)
 let assert_not_strict_eq a b = NotStrictEq (a, b)
 let assert_fail message = Fail (message)
 
-let rec assertion_to_assert = function
+let rec apply_assert = function
   | Eq (a, b) -> Binding.assertion##equal a b
   | NotEq (a, b) -> Binding.assertion##notEqual a b
   | StrictEq (a, b) -> Binding.assertion##deepStrictEqual a b
@@ -69,62 +69,47 @@ let rec assertion_to_assert = function
   | NotOk v -> Binding.assertion##ok (not v |> Js.bool)
   | Fail v -> Binding.assertion##fail v
   | Combine (a1, a2) -> begin
-      assertion_to_assert a1;
-      assertion_to_assert a2
+      apply_assert a1;
+      apply_assert a2
     end
 
 module Infix = struct
   let (<|>) a1 a2 = Combine (a1, a2)
 end
 
-type test =
-  | Sync of (string * (unit -> assertion))
-  | Async of (string * (unit -> assertion Lwt.t))
-  | Before_suite of (unit -> unit)
-  | After_suite of (unit -> unit)
-  | Before_each of (unit -> unit)
-  | After_each of (unit -> unit)
-
+module type Test = sig
+  val run: unit -> unit
+end
 
 let suite name tests =
   let name = Js.string name in
   let callback = Js.wrap_callback (fun () ->
-      List.iter (function
-          | Before_suite f -> Binding.mocha##before (Js.wrap_callback f)
-          | Before_each f -> Binding.mocha##beforeEach (Js.wrap_callback f)
-          | After_suite f -> Binding.mocha##after (Js.wrap_callback f)
-          | After_each f -> Binding.mocha##afterEach (Js.wrap_callback f)
-          | Sync (name, f) -> begin
-              let name = Js.string name in
-              let callback = Js.wrap_callback @@ fun () -> assertion_to_assert (f ()) in
-              Binding.mocha##it name callback
-            end
-          | Async (name, f) -> begin
-              let name = Js.string name in
-              let callback = Js.wrap_callback (fun () ->
-                  let open Lwt.Infix in
-                  let promise resolve _ =
-
-                    let lwt = Lwt_js.yield ()
-                      >>= f
-                      >|= assertion_to_assert
-                      >>= (fun v -> Js.Unsafe.fun_call resolve [||] |> Lwt.return) in
-                    Lwt.ignore_result lwt
-                  in
-                  Binding.Promise.make promise
-                ) in
-              Binding.mocha##it_async name callback
-            end
-        )
-        tests
+      List.iter (fun (module M : Test) -> M.run ()) tests
     ) in
   Binding.mocha##describe name callback
 
 let (>:::) = suite
-let (>::) name cb = Sync (name, cb)
-let (>:-) name cb = Async (name, cb)
+let (>::) name cb =
+  (module struct
+    let run () =
+      let name = Js.string name in
+      let callback = Js.wrap_callback @@ fun () -> apply_assert (cb ()) in
+      Binding.mocha##it name callback
+  end : Test)
 
-let before_suite cb = Before_suite cb
-let before_each cb = Before_each cb
-let after_suite cb = After_suite cb
-let after_each cb = After_each cb
+let before_suite cb =
+  (module struct
+    let run () = Binding.mocha##before (Js.wrap_callback cb)
+  end : Test)
+let before_each cb =
+  (module struct
+    let run () = Binding.mocha##beforeEach (Js.wrap_callback cb)
+  end : Test)
+let after_suite cb =
+  (module struct
+    let run () = Binding.mocha##after (Js.wrap_callback cb)
+  end : Test)
+let after_each cb =
+  (module struct
+    let run () = Binding.mocha##afterEach (Js.wrap_callback cb)
+  end : Test)

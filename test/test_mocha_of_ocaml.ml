@@ -1,4 +1,5 @@
 open Mocha_of_ocaml
+open Mocha_of_ocaml_async
 
 let _ =
   "single test" >::: [
