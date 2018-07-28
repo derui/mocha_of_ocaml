@@ -1,19 +1,4 @@
-type mocha_callback = (unit -> unit) Js.callback
-
 module Binding = struct
-
-  module Promise = struct
-
-    type 'a resolve = ('a -> unit) Js.callback
-    type 'a reject = ('a -> unit) Js.callback
-
-    class type ['a, 'b] t = object
-    end
-
-    let make f =
-      let ctor : (('a resolve -> 'b reject -> unit) Js.callback -> ('a, 'b) t Js.t) Js.constr = Js.Unsafe.global##.Promise in
-      new%js ctor (Js.wrap_callback f)
-  end
 
   (* mocha's function that wrap up tests *)
   class type mocha = object
@@ -21,7 +6,6 @@ module Binding = struct
 
     (* mocha's function that include all tests *)
     method it: Js.js_string Js.t -> (unit -> unit) Js.callback -> unit Js.meth
-    method it_async: Js.js_string Js.t -> (unit -> ('a, 'b) Promise.t Js.t) Js.callback -> unit Js.meth
     method before: (unit -> unit) Js.callback -> unit Js.meth
     method beforeEach: (unit -> unit) Js.callback -> unit Js.meth
     method after: (unit -> unit) Js.callback -> unit Js.meth
@@ -39,7 +23,7 @@ module Binding = struct
     method fail: string -> unit Js.meth
   end
 
-  let assertion = Js.Unsafe.js_expr "require('assert')"
+  let assertion : assertion Js.t = Js.Unsafe.js_expr "require('assert')"
 end
 
 type assertion =

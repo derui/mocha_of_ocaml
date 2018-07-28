@@ -1,5 +1,4 @@
 open Mocha_of_ocaml
-type mocha_callback = (unit -> unit) Js.callback
 
 module Binding = struct
 
@@ -31,16 +30,6 @@ module Binding = struct
 
   let mocha : mocha Js.t = Js.Unsafe.global
 
-  class type assertion = object
-    method ok: bool Js.t -> unit Js.meth
-    method equal: 'a -> 'a -> unit Js.meth
-    method notEqual: 'a -> 'a -> unit Js.meth
-    method deepStrictEqual: 'a -> 'a -> unit Js.meth
-    method notDeepStrictEqual: 'a -> 'a -> unit Js.meth
-    method fail: string -> unit Js.meth
-  end
-
-  let assertion = Js.Unsafe.js_expr "require('assert')"
 end
 
 let (>:-) name cb =
@@ -54,7 +43,7 @@ let (>:-) name cb =
             let lwt = Lwt_js.yield ()
               >>= cb
               >|= apply_assert
-              >>= (fun v -> Js.Unsafe.fun_call resolve [||] |> Lwt.return) in
+              >>= (fun _ -> Js.Unsafe.fun_call resolve [||] |> Lwt.return) in
             Lwt.ignore_result lwt
           in
           Binding.Promise.make promise

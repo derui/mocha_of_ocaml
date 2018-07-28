@@ -9,11 +9,11 @@ bug-reports: "https://github.com/derui/mocha_of_ocaml"
 dev-repo: "git+https://github.com/derui/mocha_of_ocaml"
 tags: []
 build: [
-  ["jbuilder" "build" "-p" name "-j" jobs]
-  ["jbuilder" "runt" "-p" name] {test}
+  ["dune" "build" "-p" name "-j" jobs]
+  ["dune" "runtest" "-p" name] {test}
 ]
 depends: [
-  "jbuilder" { build >= "1.0+beta16"}
+  "dune" { build >= "1.0.0"}
   "lwt" {>= "3.1.0"}
   "js_of_ocaml-lwt" {>= "3.1.0"}
   "js_of_ocaml" {>= "3.1.0"}
